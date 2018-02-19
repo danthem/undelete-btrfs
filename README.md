@@ -39,11 +39,11 @@ Well, there are some comments in the code... Have a read through that and see if
 ## Depth?
 As you run the script you will see different "depth" levels. There are basically three levels of depth; 0, 1 and 2.
 
-### Depth 0:
+#### Depth 0:
 A simple btrfs-restore with the regex built from the path
-### Depth 1: 
+#### Depth 1: 
 Find alternative roots using btrfs-find-roots, loop through them looking for data based on the provided path.
-### Depth 2: 
+#### Depth 2: 
 Same as above but the btrfs-find-roots is run with the -a flag which generates a lot more roots. This can be very slow to go through. 
 
 A note about depth 2 as well is that it seems like btrfs restore does segfault on some roots provided. So while running this your terminal may be flooded with (core-dumped)-messages. This is expected (well.. kind of).  
