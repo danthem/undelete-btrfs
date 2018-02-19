@@ -3,10 +3,10 @@ A tool to automate the creation of --path-restore regex for BTRFS as well as act
 
 Tested with: btrfs-progs 4.15
 
-===
-Syntax: ./script.sh <dev> <dst>
-Example: ./undelete.sh /dev/sda1 /mnt/
-===
+## Syntax
+Syntax: ```./script.sh <dev> <dst>```
+Example: ```./undelete.sh /dev/sda1 /mnt/```
+
 
 ## How to use it
 Upon launch of the script it will ask you to enter the path to the file you're looking to recover. Simply enter the path to the file or the directory you're looking for like but exclude the mount-point for the volume... Here's what it should look like:
