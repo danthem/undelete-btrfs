@@ -5,6 +5,7 @@ Tested with: btrfs-progs 4.15
 
 ## Syntax
 Syntax: ```./script.sh <dev> <dst>```
+
 Example: ```./undelete.sh /dev/sda1 /mnt/```
 
 
@@ -24,4 +25,5 @@ Note that for directory recoveries the path entered must end with a slash ("/").
 
 ## Current limitations: 
 *Possibly issues with special characters in file or folder name
+
 *Does not play well in systems where readarray does not take the -d flag
