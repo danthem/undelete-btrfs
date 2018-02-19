@@ -10,7 +10,7 @@ Example: ```./undelete.sh /dev/sda1 /mnt/```
 
 Note: <dev> cannot be mounted while you run this script.
 
-## I just deleted all an important file - what do I do?
+## I just deleted an important file - what do I do?
 *Stop what you're doing
 
 *Umount the FS where the file was located
