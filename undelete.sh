@@ -7,7 +7,6 @@
 #Syntax: ./undeletebtrfs.sh <dev> <dst>
 #Example: ./undeletebtrfs.sh /dev/sda1 /mnt/undeleted
 #NOTE: device must be unmounted
-clear
 # var declarations
 dev=$1
 dst=$2
@@ -50,9 +49,16 @@ function syntaxcheck(){
     titleprint
     printf "${red}Error: ${yellow}Invalid syntax or missing required parameters\n"
     printf "${normal}Syntax: ./script.sh ${blue}<dev> <dst>${normal}\n"
-    printf "${green}Example: ${normal}./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n\n"
+    printf "${green}Example: ${normal}sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n\n"
+    exit 1
+  elif [[ $EUID -ne 0 ]]; then
+    titleprint
+    printf "${red}Error:${yellow} This script must be run with sudo (or as root) as btrfs restore requires it.\n"
+    printf "${normal}Syntax example: sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n"
+    printf "\n${yellow}Exiting...\n${normal}"
     exit 1
   fi
+
 }
 
 function mountcheck(){
@@ -313,6 +319,7 @@ function checkrecoverresults(){
 #Exec start
 syntaxcheck
 mountcheck
+clear
 >$tmp
 >$roots
 titleprint
