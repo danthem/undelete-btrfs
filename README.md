@@ -1,6 +1,6 @@
 # undelete-btrfs
 A tool to automate the creation of --path-restore regex for BTRFS as well as actually perform the undeletion for you.
-Note: The longer a file has existed, the more likely it is to be recovered. This means that the script may not work well on "test"-setups where you just attempt to create a delete a file, but it should work decently on a 'real' system.
+Note: The longer a file has existed, the more likely it is to be recovered. This means that the script may not work well on "test"-setups where you just create a file and then instantly try to recover it, but it should work decently on a 'real' system.
 
  You may also end up recovering an older version of the file. Script will try to recover the most recent version but there's no guarantee the most recent recoverable version is actually the most recent version of the file.
 
