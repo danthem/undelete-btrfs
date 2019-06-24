@@ -28,10 +28,12 @@ Upon launch of the script it will ask you to enter the path to the file you're l
 
 ### Recovery of a file:
 Actual path to file: /data/Documents/bills/electric.pdf
+
 How to write it in script: /Documents/bulls/electric.pdf
 
 ### Recovery of a folder:
 Actual path to folder: /data/Pictures/2017/Iceland/
+
 How to write it in the script: /Pictures/2017/Iceland/
 
 Note that for directory recoveries the path entered must end with a slash ("/").
