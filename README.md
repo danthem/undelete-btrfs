@@ -27,12 +27,12 @@ Note: <dev> cannot be mounted while you run this script.
 Upon launch of the script it will ask you to enter the path to the file you're looking to recover. Simply enter the path to the file or the directory you're looking for like but exclude the mount-point for the volume... Here's what it should look like:
 
 ### Recovery of a file:
-Actual path to file: /data/Documents/bills/electric.pdf
+Actual path to file: **/data**/Documents/bills/electric.pdf
 
 How to write it in script: /Documents/bulls/electric.pdf
 
 ### Recovery of a folder:
-Actual path to folder: /data/Pictures/2017/Iceland/
+Actual path to folder: **/data**/Pictures/2017/Iceland/
 
 How to write it in the script: /Pictures/2017/Iceland/
 
@@ -59,5 +59,5 @@ A note about depth 2 as well is that it seems like btrfs restore does segfault o
 *Does not play well in systems where readarray does not take the -d flag
 
 ## Important note
-There is no native undeletion feature of BTRFS. This  script utilizes btrfs restore as well as btrfs-find-root to attempt recovery of deleted files on a given path. There are absolutely no guarantees it will work to recover the file. The best undeletion tool is to restore from backup. The longer a file has existed on your system, the more likely a successful recovery will be.
+There is no native undelete feature in BTRFS. This  script utilizes btrfs restore as well as btrfs-find-root to attempt recovery of deleted files on a given path. There are absolutely no guarantees it will work to recover the file. The best undeletion tool is to restore from backup. The longer a file has existed on your system, the more likely a successful recovery will be.
 
