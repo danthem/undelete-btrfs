@@ -37,13 +37,9 @@ How to write it in the script: `/Pictures/2017/Iceland/`
 ⚠ Pay attention to the fact that for directory recoveries the path entered **must** end with a slash ("/"). This tells the script that we're dealing with a directory instead of a file.
 
 ### **Recovery of certain extensions**:
-On whole volume, regardless of path:
+On whole volume, regardless of path: `*./.*.pdf`
 
-How to write it in the script: `*./.*.pdf`
-
-Within a certain directory:
-
-How to write it in the script: `/documents/finance/.*.pdf`
+Within a certain directory: `/documents/finance/.*.pdf`
 
 
 ## What is actually going on?
