@@ -23,23 +23,34 @@ Note: \<source dev\> cannot be mounted while you run this script.
 ## How to use it
 When launching the script you will be asked to provide the path to the file/directory you're looking to recover. When entering the path you need to exclude the normal mountpoint for the BTRFS volume, you need to imagine that you're writing relative path from the root of the BTRFS volume itself. Here are some examples of what it should look like:
 
-### Recovery of a file:
+### **Recovery of a file**:
 Actual path to file: **/data**/Documents/bills/electric.pdf
 
-How to write it in script: /Documents/bulls/electric.pdf
+How to write it in script: `/Documents/bulls/electric.pdf`
 
-### Recovery of a folder:
+### **Recovery of a folder**:
 Actual path to folder: **/data**/Pictures/2017/Iceland/
 
-How to write it in the script: /Pictures/2017/Iceland/
+How to write it in the script: `/Pictures/2017/Iceland/`
 
-Pay attention to the fact that for directory recoveries the path entered **must** end with a slash ("/"). This tells the script that we're dealing with a directory instead of a file.
+
+⚠ Pay attention to the fact that for directory recoveries the path entered **must** end with a slash ("/"). This tells the script that we're dealing with a directory instead of a file.
+
+### **Recovery of certain extensions**:
+On whole volume, regardless of path:
+
+How to write it in the script: `*./.*.pdf`
+
+Within a certain directory:
+
+How to write it in the script: `/documents/finance/.*.pdf`
+
 
 ## What is actually going on?
-Well, there are some comments in the code... Have a read through that and see if you can make sense of it. But to keep it simple the script will attempt three different 'depths' of recovery... It will go through them one by one, if data is found it prompt you if the data found is what you're looking for or if you want to look deeper. 
+Well, there are some comments in the code... Have a read through that and see if you can make sense of it. But to keep it shor and simple: The script automatically generates the somewhat awkward regex syntax required by `btfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
 
 ## Depth?
-As you run the script you will see different "depth" levels. There are basically three levels of depth; 0, 1 and 2.
+As you run the script you will see different "depth" levels. The depth level determines how deep we dig for the data, the deeper we go the slower the recovery but also the chance for recovery increases. There are three levels of depth in the undelete-btrfs script: 0, 1 and 2.
 
 #### Depth 0:
 A simple btrfs-restore with the regex built from the path provided.
@@ -48,7 +59,7 @@ Find alternative roots using btrfs-find-roots, script loops through every root o
 #### Depth 2: 
 Same as above but the btrfs-find-roots is run with the -a flag which generates a lot more roots. This will is the slowest recovery level, it may take a long time to complete. 
 
-A note about depth 2 as well is that it seems like btrfs restore does segfault on some roots provided. So while running this your terminal may be flooded with (core-dumped)-messages. This is expected (well.. kind of).  
+Regarding depth level 2: It's somewhat common that btrfs restore segfaults on roots found here, this will flood your terminal with (core-dumped)-messages but the recovery should continue as expected. Remember that depth 2 is the deepest we go and this may take a long time to complete.
 
 ## Current limitations 
 *In some rare cases btrfs restore can get stuck waiting for user input. See issue #5. 
