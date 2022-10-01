@@ -56,25 +56,24 @@ function spinner(){
 function syntaxcheck(){
   # Check syntax
   if [[ -z $dev || -z $dst ]]; then
-    titleprint
+    titler "BTRFS-undelete | Syntax error"
     printf "${red}Error: ${yellow}Invalid syntax or missing required parameters\n"
     printf "${normal}Syntax: ./script.sh ${blue}<dev> <dst>${normal}\n"
     printf "${green}Example: ${normal}sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n\n"
     exit 1
   elif [[ $EUID -ne 0 ]]; then
-    titleprint
+        titler "BTRFS-undelete | User privilege level error"
     printf "${red}Error:${yellow} This script must be run with sudo (or as root) as btrfs restore requires it.\n"
     printf "${normal}Syntax example: sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n"
     printf "\n${yellow}Exiting...\n${normal}"
     exit 1
   fi
-
 }
 
 function mountcheck(){
   mount=$(grep -cw "$dev" /etc/mtab)
   if [[ ! $mount == "0" ]]; then
-    titleprint
+    titler "BTRFS-undelete | Mountcheck failed"
     printf "${red}Error: ${blue}%s${yellow} is mounted! \nThis script can only be run against umounted devices. Please try again\n\n" "$dev"
     printf "Exiting...\n${normal}"
     exit 1
@@ -84,6 +83,7 @@ function mountcheck(){
 function regexbuild(){
   # The regex required by btrfs restore is utterly awkward... So we have a function for building it :-)
   >$tmp
+  titler "BTRFS-undelete | Regex builder"
   printf "Welcome and good luck!\nMake sure you've read the README at ${blue}https://github.com/danthem/undelete-btrfs${normal} before continuing.\n"
   printf "\nCheat sheet:\n•Remember to NOT include the mountpoint where FS is normally mounted. Pretend that you're in 'root' of the filesystem itself.\n"
   printf "•Example of a ${blue}file${normal} path on a mounted filesystem: ${white}/data/documents/daniel.txt${normal}\n"
@@ -134,6 +134,9 @@ function regexbuild(){
     done
   fi
   #printf "\nRegex:\n${blue}^/%s$ ${normal}\n\n" "$regex"
+  printf "${green}Great!${normal} First thing we will do is a dry-run, this will not actually recover any files, just check if we can find any files matching the regex."
+  printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal}\n" "$filepath" "$regex" 
+  sleep 2
   dryrun
   checkresult
 }
@@ -142,7 +145,9 @@ function dryrun(){
   # This is where we do the dryrun of BTRFS, this is used to quickly check if we can find the file using the provided regexbuild
   # much faster than doing an actual restore.
   clear
-  titler "Dry-run"
+  titler "BTRFS-undelete | Dry-run | Depth-level: ${depth}"
+  printf "Performing a dry-run recovery with the provided path.\n${yellow}This is not recovering any files, just checking if files can be found${normal}\n"
+  sleep 2
   if [[ $depth -eq 0 ]]; then
     sudo btrfs restore -Div --path-regex '^/'${regex}'$' $dev /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
     # We have 3 levels: 0, 1 and 2. 0 means a basic 'btrfs restore', 1 and 2 means that we first get the roots and then loop them
@@ -156,12 +161,11 @@ function dryrun(){
       btrfs restore -t "$i" -Div --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null| grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
     done < "$roots"
   fi
-  sleep 5
-}
+  }
 
 function checkresult(){
   clear
-  titleprint
+  titler "BTRFS-undelete | Dry-run results | Depth-level: ${depth}"
   printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal} \nDepth-level: ${blue}%s${normal}\n\n" "$filepath" "$regex" "$depth"
   if [[ ! -s $tmp && $depth -eq 0 ]]; then
     # we didn't find any data on first attempt (as $tmp is empty)
@@ -202,7 +206,6 @@ function checkresult(){
             clear
             printf "${yellow}Returning to path selection...${normal}\n\n"
             depth=0
-            titleprint
             regexbuild
             ;;
           [4])
@@ -219,12 +222,13 @@ function checkresult(){
     clear
     depth=0
     printf "${yellow}Returning to path selection...${normal}\n\n"
-    titleprint
     regexbuild
   fi
 }
 
 function generateroots(){
+  clear
+  titler "BTRFS-undelete | Generating roots | Depth-level ${depth}"
   if [[ $depth -eq 1 || $depth -eq 0 ]]; then
     printf "Generating roots, please note that this may take a while to finish... "
     btrfs-find-root "$dev" &> "$tmp"
@@ -282,12 +286,12 @@ function recover(){
 
 function checkrecoverresults(){
   clear
-  titleprint
+  titler "BTRFS-undelete | Recovery completed | Depth-level: ${depth}"
   if [[ $depth = "0" || $depth = "1" ]]; then
     printf "Recovery completed at depth level ${blue}%s${normal}! \n ==> ${blue}%s${normal} non-empty files found in %s.\n\n" "$depth" "$recoveredfiles" "$dst"
-    printf "Here's the 'find . -type f' output of %s:\n====\n" "$dst"
-    find "$dst" -type f
-    printf "====\n\n"
+    printf "Here's a sample 'find . -type f' (showing max 20 files) output of %s:\n========\\n" "$dst"
+    find "$dst" -type f | head -n20
+    printf "========\\n\n"
     printf "Are you happy with the results?\n${blue}1${normal}) Yes, exit script. \n${blue}2${normal}) No, try a deeper level restore. \n${blue}3${normal}) No, I want to try a different path.\n\n"
     while true; do
       read -r -p "Enter choice: " input
@@ -305,7 +309,6 @@ function checkrecoverresults(){
         [3])
           printf "\nReturning to path selection....\n\n"
           depth=0
-          titleprint
           regexbuild
           ;;
         *)
@@ -329,7 +332,6 @@ function checkrecoverresults(){
         [2])
           printf "\nReturning to path selection....\n\n"
           depth=0
-          titleprint
           regexbuild
           ;;
         *)
@@ -345,5 +347,4 @@ mountcheck
 clear
 >$tmp
 >$roots
-titleprint
 regexbuild
