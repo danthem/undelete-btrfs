@@ -28,6 +28,16 @@ function titleprint(){
   printf "========================\n| ${yellow}BTRFS File Undeleter${normal} |\n========================\n"
 }
 
+function titler() {
+# Function to surround whatever is inputted with some nice lines
+        input=$1
+        let count=${#input}+4
+        eval printf '=%.0s' "{1..$count}"
+        printf "\n| ${yellow}%s${normal} |\n" "$input"
+        eval printf '=%.0s' "{1..$count}"
+        printf "\n"
+}
+
 function spinner(){
   # This function takes care of the spinner used for long-lasting tasks
     local pid=$!
@@ -131,6 +141,8 @@ function regexbuild(){
 function dryrun(){
   # This is where we do the dryrun of BTRFS, this is used to quickly check if we can find the file using the provided regexbuild
   # much faster than doing an actual restore.
+  clear
+  titler "Dry-run"
   if [[ $depth -eq 0 ]]; then
     sudo btrfs restore -Div --path-regex '^/'${regex}'$' $dev /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
     # We have 3 levels: 0, 1 and 2. 0 means a basic 'btrfs restore', 1 and 2 means that we first get the roots and then loop them
@@ -144,6 +156,7 @@ function dryrun(){
       btrfs restore -t "$i" -Div --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null| grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
     done < "$roots"
   fi
+  sleep 5
 }
 
 function checkresult(){

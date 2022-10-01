@@ -1,10 +1,10 @@
 # undelete-btrfs
-A tool to automate the creation of --path-restore regex for BTRFS as well as actually perform the undeletion for you.
-The longer a file has existed, the more likely it is to be recovered. This means that the script may not work well on "test"-setups where you just create a file and then instantly try to recover it, but it should work decently on a 'real' system.
+A tool for automating the generation of path regex for BTRFS restore as well as attempt the restore for you in 3 levels.
+The longer a file has existed prior to being deleted, the more likely it is to be recovered. This means that the script may not always work well on "test"-setups where you just create a file and then instantly try to recover it, but it should work decently on a 'real' system.
 
- You may also end up recovering an older version of the file. Script will try to recover the most recent version but there's no guarantee the most recent recoverable version is actually the most recent version of the file.
+You may also end up recovering an older version of the file. The script will try to recover the most recent version but there's no guarantee the most recent recoverable version is the most recent version of the file.
 
-Tested with: btrfs-progs 5.10.1
+Script has been tested and confirmed working with BTRFS version: v5.19.1  (script should also work on older versions)
 
 ## Syntax
 Syntax: ```./script.sh <source dev> <recovery destination>```
@@ -34,7 +34,7 @@ Actual path to folder: **/data**/Pictures/2017/Iceland/
 How to write it in the script: `/Pictures/2017/Iceland/`
 
 
-⚠ Pay attention to the fact that for directory recoveries the path entered **must** end with a slash ("/"). This tells the script that we're dealing with a directory instead of a file.
+> ⚠ Pay attention to the fact that for directory recoveries the path entered **must** end with a slash ("/"). This tells the script that we're dealing with a directory instead of a file.
 
 ### **Recovery of certain extensions**:
 On whole volume, regardless of path: `*./.*.pdf`
