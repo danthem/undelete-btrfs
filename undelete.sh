@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #Author: Daniel Elf
-#Tested w/ btrfs-progs v4.14.1
+#Tested w/ btrfs-progs v5.19.1
 #Description: Somewhat interactive "undeleter" for BTRFS file systems.
 #  This will not work for every file in every scenario
 #  The best 'undeletion' you can do is to recover from backup :-)
@@ -16,12 +16,12 @@ tmp="/tmp/undeleter.tmp"
 IFS=$'\n'
 rectype="none"
 # vars that can be used to change font color
+white=$(tput setaf 7)
 blue=$(tput setaf 6)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 red=$(tput setaf 1)
 normal=$(tput sgr0) # default color
-
 
 # Functions
 function titleprint(){
@@ -72,17 +72,20 @@ function mountcheck(){
 }
 
 function regexbuild(){
-  # Build regex for single share
+  # The regex required by btrfs restore is utterly awkward... So we have a function for building it :-)
   >$tmp
-  printf "Below, enter the path to a file or folder, excluding the mountpoint\n"
-  printf "Example file: /data/documents/daniel.txt\n"
-  printf "How to write it: /documents/daniel.txt\n"
-  printf "Example directory: /data/pictures/important/\n"
-  printf "How to write it: /pictures/important/\n\n"
-  read -r -p "Enter path to file: " filepath
+  printf "Welcome and good luck!\nMake sure you've read the README at ${blue}https://github.com/danthem/undelete-btrfs${normal} before continuing.\n"
+  printf "\nCheat sheet:\n•Remember to NOT include the mountpoint where FS is normally mounted. Pretend that you're in 'root' of the filesystem itself.\n"
+  printf "•Example of a ${blue}file${normal} path on a mounted filesystem: ${white}/data/documents/daniel.txt${normal}\n"
+  printf " -> How to write it: ${white}/documents/daniel.txt${normal}\n"
+  printf "•Example of a ${blue}directory${normal} path on a mounted filesystem: ${white}/data/pictures/important/${normal}\n"
+  printf " -> How to write it: ${white}/pictures/important/${normal}\n"
+  printf "•Maybe you want recover for instance all ${blue}files with extension${normal} .jpeg in a directory?\n"
+  printf " -> How to write it: ${white}/pictures/.*.jpeg${normal}\n\n"
+  read -er -p "Enter the path to a file or folder, following the rules above: " filepath
   while [[ -z "$filepath" ]]; do
     printf "\n${red}Err: No input given, try again.\n${normal}"
-    read -r -p "Enter path to file: " filepath
+    read -r -p "Enter the path to a file or folder, following the rules above: " filepath
   done
   # Pick out the dir and filename
   dirname=$(echo "$filepath" | awk -F"/" '{ print $(NF-1) }')
@@ -102,18 +105,25 @@ function regexbuild(){
     recname="$filename"
   fi
   # Read provided path to array
+
   readarray -d/ -t filepatharray < <(echo "$filepath")
-  # Build the first set
-  regex="(|"${filepatharray[@]::1}""
-  # Build the rest, add them one by one
-  for i in "${filepatharray[@]:1}"; do
-    regex+=$(printf "(|/%s" "$i")
-  done
-  # Finally add enough ")" at the end
-  for i in "${filepatharray[@]}"; do
-    regex+=")"
-  done
-  printf "\nRegex:\n${blue}^/%s$ ${normal}\n\n" "$regex"
+  if  [[ ${#filepatharray[@]} -eq 1 ]];then 
+    #no / found, user is looking for a file in root of FS itself.. Easy to build the regex
+    regex="(|"${recname}")"
+  else
+    # Build the first set.. This is done to remove the / from the first seciotn
+    regex="(|"${filepatharray[@]::1}""
+    # Build the array one by one
+    for i in "${filepatharray[@]:1}"; do
+      regex+=$(printf "(|/%s" "$i")
+    done
+    # Finally add enough ")" at the end
+    for i in "${filepatharray[@]}"; do
+      regex+=")"
+      #regex="$(echo $regex|tr -d "\n")"
+    done
+  fi
+  #printf "\nRegex:\n${blue}^/%s$ ${normal}\n\n" "$regex"
   dryrun
   checkresult
 }
