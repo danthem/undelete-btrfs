@@ -56,13 +56,13 @@ function spinner(){
 function syntaxcheck(){
   # Check syntax
   if [[ -z $dev || -z $dst ]]; then
-    titler "BTRFS-undelete | Syntax error"
+    titler "Undelete-BTRFS | Syntax error"
     printf "${red}Error: ${yellow}Invalid syntax or missing required parameters\n"
     printf "${normal}Syntax: ./script.sh ${blue}<dev> <dst>${normal}\n"
     printf "${green}Example: ${normal}sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n\n"
     exit 1
   elif [[ $EUID -ne 0 ]]; then
-        titler "BTRFS-undelete | User privilege level error"
+        titler "Undelete-BTRFS | User privilege level error"
     printf "${red}Error:${yellow} This script must be run with sudo (or as root) as btrfs restore requires it.\n"
     printf "${normal}Syntax example: sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n"
     printf "\n${yellow}Exiting...\n${normal}"
@@ -73,7 +73,7 @@ function syntaxcheck(){
 function mountcheck(){
   mount=$(grep -cw "$dev" /etc/mtab)
   if [[ ! $mount == "0" ]]; then
-    titler "BTRFS-undelete | Mountcheck failed"
+    titler "Undelete-BTRFS | Mountcheck failed"
     printf "${red}Error: ${blue}%s${yellow} is mounted! \nThis script can only be run against umounted devices. Please try again\n\n" "$dev"
     printf "Exiting...\n${normal}"
     exit 1
@@ -83,7 +83,7 @@ function mountcheck(){
 function regexbuild(){
   # The regex required by btrfs restore is utterly awkward... So we have a function for building it :-)
   >$tmp
-  titler "BTRFS-undelete | Regex builder"
+  titler "Undelete-BTRFS | Regex builder"
   printf "Welcome and good luck!\nMake sure you've read the README at ${blue}https://github.com/danthem/undelete-btrfs${normal} before continuing.\n"
   printf "\nCheat sheet:\n•Remember to NOT include the mountpoint where FS is normally mounted. Pretend that you're in 'root' of the filesystem itself.\n"
   printf "•Example of a ${blue}file${normal} path on a mounted filesystem: ${white}/data/documents/daniel.txt${normal}\n"
@@ -134,9 +134,8 @@ function regexbuild(){
     done
   fi
   #printf "\nRegex:\n${blue}^/%s$ ${normal}\n\n" "$regex"
-  printf "${green}Great!${normal} First thing we will do is a dry-run, this will not actually recover any files, just check if we can find any files matching the regex."
-  printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal}\n" "$filepath" "$regex" 
-  sleep 2
+  printf "\n${green}Great!${normal} First thing we will do is a dry-run, this will not actually recover any files, just check if we can find any files matching the regex.\n"
+  sleep 5
   dryrun
   checkresult
 }
@@ -145,7 +144,7 @@ function dryrun(){
   # This is where we do the dryrun of BTRFS, this is used to quickly check if we can find the file using the provided regexbuild
   # much faster than doing an actual restore.
   clear
-  titler "BTRFS-undelete | Dry-run | Depth-level: ${depth}"
+  titler "Undelete-BTRFS | Dry-run | Depth-level: ${depth}"
   printf "Performing a dry-run recovery with the provided path.\n${yellow}This is not recovering any files, just checking if files can be found${normal}\n"
   sleep 2
   if [[ $depth -eq 0 ]]; then
@@ -165,7 +164,7 @@ function dryrun(){
 
 function checkresult(){
   clear
-  titler "BTRFS-undelete | Dry-run results | Depth-level: ${depth}"
+  titler "Undelete-BTRFS | Dry-run results | Depth-level: ${depth}"
   printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal} \nDepth-level: ${blue}%s${normal}\n\n" "$filepath" "$regex" "$depth"
   if [[ ! -s $tmp && $depth -eq 0 ]]; then
     # we didn't find any data on first attempt (as $tmp is empty)
@@ -181,9 +180,9 @@ function checkresult(){
     checkresult
   elif [[ -s $tmp ]]; then
     # if $tmp is not empty, it means we found some data!
-      printf "${green}Data found!${normal} here are the file(s) found: \n====\n"
+      printf "${green}Data found!${normal} here are the file(s) found: \n========\n"
       sort -u $tmp
-      printf "====\n\nChoose one of the following: \n${blue}1${normal}) Recover it \n${blue}2${normal}) Look one level deeper \n${blue}3${normal}) Try another path \n${blue}4${normal}) Exit\n"
+      printf "========\n\nChoose one of the following: \n${blue}1${normal}) Recover it \n${blue}2${normal}) Look one level deeper \n${blue}3${normal}) Try another path \n${blue}4${normal}) Exit\n"
       while true; do
         read -r -p "Enter choice: " input
         case $input in
@@ -216,8 +215,8 @@ function checkresult(){
         esac
       done
   else
-    printf "\n\n${red}Error:${normal} Unable to find the data, please verify the entered path and try again\n"
-    printf "Keep in mind that directory paths must end with a '/' \n\n"
+    printf "${red}No data found :(${normal}\nUnable to find any data with the provided path at any depth level, please verify the entered path and try again\n"
+    printf "Keep in mind that directory paths must end with a '/' \nFor more rules/examples see ${blue}https://github.com/danthem/undelete-btrfs${normal}\n\n"
     read -s -p "Press Enter to return to start..."
     clear
     depth=0
@@ -228,7 +227,7 @@ function checkresult(){
 
 function generateroots(){
   clear
-  titler "BTRFS-undelete | Generating roots | Depth-level ${depth}"
+  titler "Undelete-BTRFS | Generating roots | Depth-level ${depth}"
   if [[ $depth -eq 1 || $depth -eq 0 ]]; then
     printf "Generating roots, please note that this may take a while to finish... "
     btrfs-find-root "$dev" &> "$tmp"
@@ -254,6 +253,8 @@ function generateroots(){
 
 function recover(){
   # Attempt recovery of files
+  clear
+  titler "Undelete-BTRFS | Recovering files | Depth-level: ${depth}"
   if [[ $depth = "0" ]]; then
     sudo btrfs restore -iv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null
     recoveredfiles=$(find $dst ! -empty -type f | wc -l)
@@ -270,7 +271,7 @@ function recover(){
     # so that we don't skip recovering a file on next iteration just because an empty version of the same file was recovered
     recoveredfiles=$(find $dst ! -empty -type f | wc -l)
   elif [[ $depth == "2" ]]; then
-    printf "\n${red}NOTE:${normal} You are about to start deepest level recovery. \nFYI it's possible that console will get flooded with '(core dumped)'-messages.\nThis is normal and can be ignored.\n\n"
+    printf "\n${yellow}NOTE:${normal} You are about to start recovery at the deepest level. \nThis may take a long time and it's possible that console will get flooded with '(core dumped)'-messages.\nThis is normal and can be ignored.\n\n"
     read -r -n1 -p "Press any key to continue..."
     printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
     while read -r i || [[ -n "$i" ]]; do
@@ -278,7 +279,7 @@ function recover(){
       find $dst -empty -type f -delete
     done < "$roots" &
     spinner
-    printf "Done! \n"
+    printf "${green}Done${normal}! \n"
     recoveredfiles=$(find $dst ! -empty -type f | wc -l)
   fi
   checkrecoverresults
@@ -286,12 +287,12 @@ function recover(){
 
 function checkrecoverresults(){
   clear
-  titler "BTRFS-undelete | Recovery completed | Depth-level: ${depth}"
+  titler "Undelete-BTRFS | Recovery completed | Depth-level: ${depth}"
   if [[ $depth = "0" || $depth = "1" ]]; then
     printf "Recovery completed at depth level ${blue}%s${normal}! \n ==> ${blue}%s${normal} non-empty files found in %s.\n\n" "$depth" "$recoveredfiles" "$dst"
-    printf "Here's a sample 'find . -type f' (showing max 20 files) output of %s:\n========\\n" "$dst"
+    printf "Here's a small sample of '${white}find %s -type f${normal}' output:\n========\n" "$dst"
     find "$dst" -type f | head -n20
-    printf "========\\n\n"
+    printf "========\\n(Showing max 20 files)\n\n"
     printf "Are you happy with the results?\n${blue}1${normal}) Yes, exit script. \n${blue}2${normal}) No, try a deeper level restore. \n${blue}3${normal}) No, I want to try a different path.\n\n"
     while true; do
       read -r -p "Enter choice: " input
@@ -317,9 +318,9 @@ function checkrecoverresults(){
     done
   elif [[ $depth = "2" ]]; then
     printf "Deepest level recovery completed! \n ==> ${blue}%s${normal} non-empty files found in %s.\n\n" "$recoveredfiles" "$dst"
-    printf "Here's the 'find . -type f' output of %s:\n====\n" "$dst"
-    find "$dst" -type f
-    printf "====\n\n"
+    printf "Here's a small sample of '${white}find %s -type f${normal}' output:\n========\n" "$dst"
+    find "$dst" -type f | head -n20
+    printf "========\n\n"
     printf "Are you happy with the results?\n${blue}1${normal}) Yes, exit script. \n${blue}2${normal}) No, I want to try a different path.\n\n"
     while true; do
       read -r -p "Enter choice: " input
