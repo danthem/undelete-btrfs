@@ -182,12 +182,11 @@ function checkresult(){
     # if $tmp is not empty, it means we found some data!
       printf "${green}Data found!${normal} here are the file(s) found: \n========\n"
       sort -u $tmp
-      printf "========\n\nChoose one of the following: \n${blue}1${normal}) Recover it \n${blue}2${normal}) Look one level deeper \n${blue}3${normal}) Try another path \n${blue}4${normal}) Exit\n"
+      printf "========\n\nChoose one of the following: \n${blue}1${normal}) Recover the data \n${blue}2${normal}) Look one level deeper \n${blue}3${normal}) Try another path \n${blue}4${normal}) Exit\n"
       while true; do
         read -r -p "Enter choice: " input
         case $input in
           [1])
-            printf "\nRecover chosen...\n"
             recover
             ;;
           [2])
