@@ -101,9 +101,9 @@ function regexbuild(){
     filepath=$(echo "$filepath"| cut -c2-)
   fi
   # Determine type of recovery.. are we doing full directory or single file?
-  # Not used right now but maybe in a future version...
+  # $rectype not used at the moment but will be eventually... probably.
   if [[ $filepath == */ ]]; then
-    rectype="directory"
+    rectype="dir"
     recname="$dirname"
     filepath+=".*"
   else
@@ -144,7 +144,7 @@ function dryrun(){
   printf "Performing a dry-run recovery with the provided path.\n${yellow}This is not recovering any files, just checking if files can be found${normal}\n"
   sleep 2
   if [[ $depth -eq 0 ]]; then
-    sudo btrfs restore -Div --path-regex '^/'${regex}'$' $dev /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
+    btrfs restore -Div --path-regex '^/'${regex}'$' $dev /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
     # We have 3 levels: 0, 1 and 2. 0 means a basic 'btrfs restore', 1 and 2 means that we first get the roots and then loop them
   elif [[ $depth -eq 1 ]]; then
     while read -r i || [[ -n "$i" ]]; do
@@ -251,8 +251,11 @@ function recover(){
   clear
   titler "Undelete-BTRFS | Recovering files | Depth-level: ${depth}"
   if [[ $depth = "0" ]]; then
-    sudo btrfs restore -iv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null
+    printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
+    btrfs restore -iv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
+    spinner
     recoveredfiles=$(find $dst ! -empty -type f | wc -l)
+    printf "${green}Done${normal}! \n"
     # Find and delete empty recovered files, no point in keeping them around.
     find $dst -empty -type f -delete
   elif [[ $depth == "1" ]]; then
