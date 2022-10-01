@@ -88,10 +88,10 @@ function regexbuild(){
   printf " -> How to write it: ${white}/pictures/important/${normal}\n"
   printf "•Maybe you want recover for instance all ${blue}files with extension${normal} .jpeg in a directory?\n"
   printf " -> How to write it: ${white}/pictures/.*.jpeg${normal}\n\n"
-  read -er -p "Enter the path to a file or folder, following the rules above: " filepath
+  read -er -p "Enter the path to a file or directory, following the rules above: " filepath
   while [[ -z "$filepath" ]]; do
     printf "\n${red}Err: No input given, try again.\n${normal}"
-    read -r -p "Enter the path to a file or folder, following the rules above: " filepath
+    read -r -p "Enter the path to a file or directory, following the rules above: " filepath
   done
   # Pick out the dir and filename
   dirname=$(echo "$filepath" | awk -F"/" '{ print $(NF-1) }')
@@ -100,10 +100,10 @@ function regexbuild(){
   if [[ $filepath == /* ]]; then
     filepath=$(echo "$filepath"| cut -c2-)
   fi
-  # Determine type of recovery.. are we doing full folder or single file?
+  # Determine type of recovery.. are we doing full directory or single file?
   # Not used right now but maybe in a future version...
   if [[ $filepath == */ ]]; then
-    rectype="folder"
+    rectype="directory"
     recname="$dirname"
     filepath+=".*"
   else
