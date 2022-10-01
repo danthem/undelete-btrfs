@@ -24,10 +24,6 @@ red=$(tput setaf 1)
 normal=$(tput sgr0) # default color
 
 # Functions
-function titleprint(){
-  printf "========================\n| ${yellow}BTRFS File Undeleter${normal} |\n========================\n"
-}
-
 function titler() {
 # Function to surround whatever is inputted with some nice lines
         input=$1
@@ -231,7 +227,7 @@ function generateroots(){
     printf "Generating roots, please note that this may take a while to finish... "
     btrfs-find-root "$dev" &> "$tmp"
     grep -a Well "$tmp" | sed -r -e 's/Well block ([0-9]+).*/\1/' | sort -rn > "$roots"
-    printf "Done!\n"
+    printf "${green}Done${normal}!\n"
     rootcount=$(wc -l "$roots" | awk '{print $1}')
     > "$tmp"
     if [[ ! -s "$roots" ]]; then
@@ -244,7 +240,7 @@ function generateroots(){
     printf "Looking even deeper for roots, this can take quite a while... "
     btrfs-find-root -a "$dev" &> "$tmp"
     grep -a Well "$tmp" | sed -r -e 's/Well block ([0-9]+).*/\1/' | sort -rn > "$roots"
-    printf "Done!\n"
+    printf "${green}Done${normal}!\n"
     rootcount=$(wc -l $roots | awk '{print $1}')
     > "$tmp"
   fi
@@ -265,7 +261,7 @@ function recover(){
       btrfs restore -t "$i" -iv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
     done < "$roots" &
     spinner
-    printf "Done! \n"
+    printf "${green}Done${normal}! \n"
     # Find and delete empty files in $dst
     # so that we don't skip recovering a file on next iteration just because an empty version of the same file was recovered
     recoveredfiles=$(find $dst ! -empty -type f | wc -l)
