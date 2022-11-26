@@ -19,7 +19,7 @@ Note: \<source dev\> cannot be mounted while you run this script.
 * Look for up-to-date backups and restore them if possible
 * If no backups, attempt to run this script
     * The filesystem needs to be unmounted during this activity, if it's the root path of your OS you'll need to boot from a live USB
-
+      * If using a live USB remember to recover to persistent storage (like an external drive or mounted network share/export) and not to the root FS of the live OS as this lives in RAM and is lost on reboot.
 
 ## How to use it
 When launching the script you will be asked to provide the path to the file/directory you're looking to recover. When entering the path you need to exclude the normal mountpoint for the BTRFS volume, you need to imagine that you're writing relative path from the root of the BTRFS volume itself. Here are some examples of what it should look like:
@@ -66,5 +66,5 @@ Regarding depth level 2: It's somewhat common that `btrfs restore` segfaults on 
 ## Important note
 There is no native undelete feature in BTRFS. This script utilizes `btrfs restore` as well as `btrfs-find-root` to attempt recovery of deleted files on a given path. There are absolutely no guarantees it will work to recover the file. The best undeletion tool is to restore from backup. The longer a file has existed on your system, the more likely a successful recovery will be.
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielelf){:target="_blank"}
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielelf){:target="_blank"}
