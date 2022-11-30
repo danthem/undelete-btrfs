@@ -66,5 +66,3 @@ Regarding depth level 2: It's somewhat common that `btrfs restore` segfaults on 
 ## Important note
 There is no native undelete feature in BTRFS. This script utilizes `btrfs restore` as well as `btrfs-find-root` to attempt recovery of deleted files on a given path. There are absolutely no guarantees it will work to recover the file. The best undeletion tool is to restore from backup. The longer a file has existed on your system, the more likely a successful recovery will be.
 
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/danielelf)
