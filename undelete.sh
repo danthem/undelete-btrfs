@@ -27,7 +27,7 @@ normal=$(tput sgr0) # default color
 function titler() {
 # Function to surround whatever is inputted with some nice lines
         input=$1
-        let count=${#input}+4
+        (( count=${#input}+4 ))
         eval printf '=%.0s' "{1..$count}"
         printf "\n| ${yellow}%s${normal} |\n" "$input"
         eval printf '=%.0s' "{1..$count}"
@@ -50,7 +50,7 @@ function spinner(){
 }
 
 function syntaxcheck(){
-  # Check syntax
+  # Check syntax and provided parameters
   if [[ -z $dev || -z $dst ]]; then
     titler "Undelete-BTRFS | Syntax error"
     printf "${red}Error: ${yellow}Invalid syntax or missing required parameters\n"
@@ -58,15 +58,30 @@ function syntaxcheck(){
     printf "${green}Example: ${normal}sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n\n"
     exit 1
   elif [[ $EUID -ne 0 ]]; then
-        titler "Undelete-BTRFS | User privilege level error"
+    titler "Undelete-BTRFS | User privilege level error"
     printf "${red}Error:${yellow} This script must be run with sudo (or as root) as btrfs restore requires it.\n"
     printf "${normal}Syntax example: sudo ./undelete.sh ${blue}/dev/sda1 /mnt/${normal}\n"
     printf "\n${yellow}Exiting...\n${normal}"
     exit 1
   fi
+  # Check if the source dev provided exists
+  if [[ ! -a $dev ]]; then 
+    titler "Undelete-BTRFS | Source check failed"
+    printf "${red}Error: ${blue}%s${yellow} doesn't seem to exist! \nCheck your syntax and try again\n\n" "$dev"
+    printf "Exiting...\n${normal}"
+    exit 1 
+  fi
+  # Check if the destination provided is a directory and that it's writable
+  if [[ ! -d $dst && ! -w $dst ]]; then 
+    titler "Undelete-BTRFS | Destination check failed"
+    printf "${red}Error: ${blue}%s${yellow} is either not a directory or not writable! \nCheck your destination and try again\n\n" "$dst"
+    printf "Exiting...\n${normal}"
+    exit 1 
+  fi
 }
 
 function mountcheck(){
+  # Check if source device provided is mounted 
   mount=$(grep -cw "$dev" /etc/mtab)
   if [[ ! $mount == "0" ]]; then
     titler "Undelete-BTRFS | Mountcheck failed"
@@ -75,6 +90,7 @@ function mountcheck(){
     exit 1
   fi
 }
+
 
 function regexbuild(){
   # The regex required by btrfs restore is utterly awkward... So we have a function for building it :-)
@@ -115,10 +131,10 @@ function regexbuild(){
   readarray -d/ -t filepatharray < <(echo "$filepath")
   if  [[ ${#filepatharray[@]} -eq 1 ]];then 
     #no / found, user is looking for a file in root of FS itself.. Easy to build the regex
-    regex="(|"${recname}")"
+    regex="(|${recname})"
   else
     # Build the first set.. This is done to remove the / from the first seciotn
-    regex="(|"${filepatharray[@]::1}""
+    regex="(|${filepatharray[@]::1}"
     # Build the array one by one
     for i in "${filepatharray[@]:1}"; do
       regex+=$(printf "(|/%s" "$i")
@@ -144,7 +160,7 @@ function dryrun(){
   printf "Performing a dry-run recovery with the provided path.\n${yellow}This is not recovering any files, just checking if files can be found${normal}\n"
   sleep 2
   if [[ $depth -eq 0 ]]; then
-    btrfs restore -Div --path-regex '^/'${regex}'$' $dev /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
+    btrfs restore -Div --path-regex '^/'${regex}'$' "$dev" /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
     # We have 3 levels: 0, 1 and 2. 0 means a basic 'btrfs restore', 1 and 2 means that we first get the roots and then loop them
   elif [[ $depth -eq 1 ]]; then
     while read -r i || [[ -n "$i" ]]; do
@@ -161,7 +177,9 @@ function dryrun(){
 function checkresult(){
   clear
   titler "Undelete-BTRFS | Dry-run results | Depth-level: ${depth}"
-  printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal} \nDepth-level: ${blue}%s${normal}\n\n" "$filepath" "$regex" "$depth"
+  printf "Path entered: ${blue}%s${normal} \nRegex generated: ${blue}'^/%s\$'${normal} \nDepth-level: ${blue}%s${normal}\n" "$filepath" "$regex" "$depth"
+  if [[ $rootcount -gt 0 ]]; then printf "Root count: ${blue}%s${normal}\n\n" "$rootcount"; else printf "\n"; fi
+
   if [[ ! -s $tmp && $depth -eq 0 ]]; then
     # we didn't find any data on first attempt (as $tmp is empty)
     depth=1
@@ -188,7 +206,7 @@ function checkresult(){
           [2])
             if [[ $depth -eq 0 || $depth -eq 1 ]]; then
               printf "\nTrying one level deeper...\n\n"
-              depth=$(($depth + 1))
+              depth=$((depth + 1))
               generateroots
               dryrun
               checkresult
@@ -212,7 +230,7 @@ function checkresult(){
   else
     printf "${red}No data found :(${normal}\nUnable to find any data with the provided path at any depth level, please verify the entered path and try again\n"
     printf "Keep in mind that directory paths must end with a '/' \nFor more rules/examples see ${blue}https://github.com/danthem/undelete-btrfs${normal}\n\n"
-    read -s -p "Press Enter to return to start..."
+    read -rsp "Press Enter to return to start..."
     clear
     depth=0
     printf "${yellow}Returning to path selection...${normal}\n\n"
@@ -254,12 +272,12 @@ function recover(){
     printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
     btrfs restore -iv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
     spinner
-    recoveredfiles=$(find $dst ! -empty -type f | wc -l)
+    recoveredfiles=$(find "$dst" ! -empty -type f | wc -l)
     printf "${green}Done${normal}! \n"
     # Find and delete empty recovered files, no point in keeping them around.
-    find $dst -empty -type f -delete
+    find "$dst" -empty -type f -delete
   elif [[ $depth == "1" ]]; then
-    printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
+    printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
       btrfs restore -t "$i" -iv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
     done < "$roots" &
@@ -267,18 +285,18 @@ function recover(){
     printf "${green}Done${normal}! \n"
     # Find and delete empty files in $dst
     # so that we don't skip recovering a file on next iteration just because an empty version of the same file was recovered
-    recoveredfiles=$(find $dst ! -empty -type f | wc -l)
+    recoveredfiles=$(find "$dst" ! -empty -type f | wc -l)
   elif [[ $depth == "2" ]]; then
     printf "\n${yellow}NOTE:${normal} You are about to start recovery at the deepest level. \nThis may take a long time and it's possible that console will get flooded with '(core dumped)'-messages.\nThis is normal and can be ignored.\n\n"
     read -r -n1 -p "Press any key to continue..."
-    printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
+    printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
       btrfs restore -t "$i" -iv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
-      find $dst -empty -type f -delete
+      find "$dst" -empty -type f -delete
     done < "$roots" &
     spinner
     printf "${green}Done${normal}! \n"
-    recoveredfiles=$(find $dst ! -empty -type f | wc -l)
+    recoveredfiles=$(find "$dst" ! -empty -type f | wc -l)
   fi
   checkrecoverresults
 }
@@ -301,7 +319,7 @@ function checkrecoverresults(){
           ;;
         [2])
           printf "Trying one level deeper..\n\n"
-          depth=$(($depth + 1))
+          depth=$((depth + 1))
           generateroots
           recover
           ;;
