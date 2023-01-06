@@ -43,9 +43,9 @@ On whole volume, regardless of path: `.*/.*.pdf`
 Within a certain directory: `/documents/finance/.*.pdf`
 
 ### **Recovery of everything**:
-On whole volume: `.*`
+All files on whole volume: `.*`
 
-Within a certain directory: `/documents/finance/.*`
+All files Within a directory: `/documents/finance/.*`
 
 ## What is actually going on?
 Well, there are comments in the code, have a read through that and see if you can make sense of it. But to keep it short and simple: The script automatically generates the somewhat awkward regex syntax required by `btfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
