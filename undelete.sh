@@ -160,16 +160,16 @@ function dryrun(){
   printf "Performing a dry-run recovery with the provided path.\n${yellow}This is not recovering any files, just checking if files can be found${normal}\n"
   sleep 2
   if [[ $depth -eq 0 ]]; then
-    btrfs restore -Div --path-regex '^/'${regex}'$' "$dev" /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
+    btrfs restore -Divv --path-regex '^/'${regex}'$' "$dev" /  2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &> $tmp
     # We have 3 levels: 0, 1 and 2. 0 means a basic 'btrfs restore', 1 and 2 means that we first get the roots and then loop them
   elif [[ $depth -eq 1 ]]; then
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -Div --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
+      btrfs restore -t "$i" -Divv --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null | grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
     done < "$roots"
     # Level 2 is the 'deepest' level, here we add the -a flag to the btrfs-find-roots, this should give us way more roots to work with
   elif [[ $depth -eq 2 ]]; then
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -Div --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null| grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
+      btrfs restore -t "$i" -Divv --path-regex '^/'${regex}'$' "$dev" / 2> /dev/null| grep -E "Restoring.*$recname" | cut -d" " -f 2- &>> $tmp
     done < "$roots"
   fi
   }
@@ -270,7 +270,7 @@ function recover(){
   titler "Undelete-BTRFS | Recovering files | Depth-level: ${depth}"
   if [[ $depth = "0" ]]; then
     printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
-    btrfs restore -iv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
+    btrfs restore -ivv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
     spinner
     recoveredfiles=$(find "$dst" ! -empty -type f | wc -l)
     printf "${green}Done${normal}! \n"
@@ -279,7 +279,7 @@ function recover(){
   elif [[ $depth == "1" ]]; then
     printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -iv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
+      btrfs restore -t "$i" -ivv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
     done < "$roots" &
     spinner
     printf "${green}Done${normal}! \n"
@@ -291,7 +291,7 @@ function recover(){
     read -r -n1 -p "Press any key to continue..."
     printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -iv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
+      btrfs restore -t "$i" -ivv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
       find "$dst" -empty -type f -delete
     done < "$roots" &
     spinner
