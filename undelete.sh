@@ -270,7 +270,7 @@ function recover(){
   titler "Undelete-BTRFS | Recovering files | Depth-level: ${depth}"
   if [[ $depth = "0" ]]; then
     printf "Attempting recovery at depth level ${blue}%s${normal}, note that this may take a while..." "$depth"
-    btrfs restore -ivv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
+    btrfs restore -imxvv --path-regex '^/'${regex}'$' "$dev" "$dst"  &> /dev/null &
     spinner
     recoveredfiles=$(find "$dst" ! -empty -type f | wc -l)
     printf "${green}Done${normal}! \n"
@@ -279,7 +279,7 @@ function recover(){
   elif [[ $depth == "1" ]]; then
     printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -ivv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
+      btrfs restore -t "$i" -imxvv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
     done < "$roots" &
     spinner
     printf "${green}Done${normal}! \n"
@@ -291,7 +291,7 @@ function recover(){
     read -r -n1 -p "Press any key to continue..."
     printf "Attempting recovery at depth level ${blue}%s${normal} with a root count of ${blue}%s${normal}, note that this may take a while..." "$depth" "$rootcount"
     while read -r i || [[ -n "$i" ]]; do
-      btrfs restore -t "$i" -ivv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
+      btrfs restore -t "$i" -imxvv --path-regex '^/'${regex}'$' "$dev" "$dst" &> /dev/null
       find "$dst" -empty -type f -delete
     done < "$roots" &
     spinner
