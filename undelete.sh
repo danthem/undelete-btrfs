@@ -135,7 +135,7 @@ function regexbuild(){
     #no / found, user is looking for a file in root of FS itself.. Easy to build the regex
     regex="(|${recname})"
   else
-    # Build the first set.. This is done to remove the / from the first seciotn
+    # Build the first set.. This is done to remove the / from the first section
     regex="(|${filepatharray[@]::1}"
     # Build the array one by one
     for i in "${filepatharray[@]:1}"; do

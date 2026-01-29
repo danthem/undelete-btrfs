@@ -1,6 +1,6 @@
 # undelete-btrfs
-A tool for automating the generation of path regex for BTRFS restore as well as attempt the restore for you in 3 levels.
-The longer a file has existed prior to being deleted, the more likely it is to be recovered. This means that the script may not always work well in "test"-environments where you just create a file and then instantly try to recover it, but it should work decently on a 'real' system.
+A tool for automating the generation of path regex for BTRFS restore as well as attempting the restore for you in 3 levels.
+The longer a file has existed prior to deletion, the more likely it is to be recovered. This means that the script may not always work well in "test"-environments where you just create a file and then instantly try to recover it, but it should work decently on a 'real' system.
 
 You may also end up recovering an older version of the file. The script will try to recover the most recent version but there's no guarantee the most recent recoverable version is the most recent version of the file.
 
@@ -22,7 +22,7 @@ Note: \<source dev\> cannot be mounted while you run this script.
       * If using a live USB remember to recover to persistent storage (like an external drive or mounted network share/export) and not to the root FS of the live OS as this lives in RAM and is lost on reboot.
 
 ## How to use it
-When launching the script you will be asked to provide the path to the file/directory you're looking to recover. When entering the path you need to exclude the normal mountpoint for the BTRFS volume, you need to imagine that you're writing relative path from the root of the BTRFS volume itself. Here are some examples of what it should look like:
+When launching the script you will be asked to provide the path to the file/directory you're looking to recover. When entering the path you need to exclude the normal mountpoint for the BTRFS volume, you need to imagine that you're writing the relative path from the root of the BTRFS volume itself. Here are some examples of what it should look like:
 
 ### **Recovery of a file**:
 Actual path to file: **/data**/Documents/bills/electric.pdf
@@ -48,7 +48,7 @@ All files on whole volume: `.*`
 All files Within a directory: `/documents/finance/.*`
 
 ## What is actually going on?
-Well, there are comments in the code, have a read through that and see if you can make sense of it. But to keep it short and simple: The script automatically generates the somewhat awkward regex syntax required by `btfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
+Well, there are comments in the code, have a read through that and see if you can make sense of it. But to keep it short and simple: The script automatically generates the somewhat awkward regex syntax required by `btrfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
 
 ## Depth?
 As you run the script you will see different "depth" levels. The depth level determines how deep we dig for the data, the deeper we go the slower the recovery but also the chance for recovery increases. There are three levels of depth in the undelete-btrfs script: 0, 1 and 2.
@@ -56,11 +56,11 @@ As you run the script you will see different "depth" levels. The depth level det
 #### Depth 0:
 A simple `btrfs restore` with the regex built from the path provided.
 #### Depth 1: 
-Find alternative roots using `btrfs-find-roots`, script loops through every root one by one looking for data matching the generated regex frm path.
+Find alternative roots using `btrfs-find-roots`, script loops through every root one by one looking for data matching the generated regex from the path.
 #### Depth 2: 
-Same as above but the `btrfs-find-roots` is run with the -a flag which generates a lot more roots. This will is the slowest recovery level, it may take a long time to complete. 
+Same as above but the `btrfs-find-roots` is run with the -a flag which generates a lot more roots. This is the slowest recovery level, it may take a long time to complete. 
 
-Regarding depth level 2: It's somewhat common that `btrfs restore` segfaults on roots found here, this will flood your terminal with (core-dumped)-messages but the recovery should continue as expected. Remember that depth 2 is the deepest we go and this may take a long time to complete.
+Regarding depth level 2: It's somewhat common that `btrfs restore` segfaults on roots found here, this will flood your terminal with (core-dumped)-messages but the recovery should continue as expected. Remember that depth 2 is the deepest we go and may take a long time to complete.
 
 ## Current/known limitations 
 * If you try to recover a directory make sure to end the path with a slash (/), otherwise you might get a match on dryrun but no files restored during recovery.
