@@ -48,7 +48,7 @@ All files on whole volume: `.*`
 All files Within a directory: `/documents/finance/.*`
 
 ## What is actually going on?
-Well, there are comments in the code, have a read through that and see if you can make sense of it. But to keep it short and simple: The script automatically generates the somewhat awkward regex syntax required by `btfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
+Well, there are comments in the code, have a read through that and see if you can make sense of it. But to keep it short and simple: The script automatically generates the somewhat awkward regex syntax required by `btrfs restore` and then attempts three different 'depths' of recovery... It will go through them one by one, if data is found at any level the script will prompt you if the data found is what you're looking for or if you want to look deeper. 
 
 ## Depth?
 As you run the script you will see different "depth" levels. The depth level determines how deep we dig for the data, the deeper we go the slower the recovery but also the chance for recovery increases. There are three levels of depth in the undelete-btrfs script: 0, 1 and 2.
